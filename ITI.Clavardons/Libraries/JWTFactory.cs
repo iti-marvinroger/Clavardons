@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
@@ -17,6 +16,11 @@ namespace ITI.Clavardons.Libraries
         public string Serialize()
         {
             return JsonConvert.SerializeObject(this, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        }
+
+        public static JWTPayload Parse(string payload)
+        {
+            return JsonConvert.DeserializeObject<JWTPayload>(payload);
         }
     }
 
@@ -60,6 +64,16 @@ namespace ITI.Clavardons.Libraries
             var signature = sign(headerAndPayload);
 
             return signature == splitted[2];
+        }
+
+        public static JWTPayload Parse(string jwt)
+        {
+            var splitted = jwt.Split('.');
+            var payload = splitted[1];
+
+            var plainPayload = Base64UrlEncoder.Decode(payload);
+
+            return JWTPayload.Parse(plainPayload);
         }
     }
 }
