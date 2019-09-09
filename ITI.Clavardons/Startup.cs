@@ -44,7 +44,7 @@ namespace ITI.Clavardons
             app.UseCors();
             app.UseSignalR(routes =>
             {
-                routes.MapHub<ChatHub>("/");
+                routes.MapHub<ChatHub>("");
             });
 
             //app.Use((context, next) =>
