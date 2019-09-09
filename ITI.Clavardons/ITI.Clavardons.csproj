@@ -8,6 +8,7 @@
     <Folder Include="wwwroot\" />
     <Folder Include="Libraries\" />
     <Folder Include="Providers\" />
+    <Folder Include="Hubs\" />
   </ItemGroup>
 
   <ItemGroup>

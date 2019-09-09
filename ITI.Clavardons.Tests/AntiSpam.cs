@@ -2,7 +2,6 @@ using System;
 using ITI.Clavardons.Libraries;
 using ITI.Clavardons.Providers;
 using NUnit.Framework;
-using Pose;
 
 namespace Tests
 {

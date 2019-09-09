@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace Tests
 {
-    public class TestJWT
+    public class TestJWTFactory
     {
         [SetUp]
         public void Setup()
