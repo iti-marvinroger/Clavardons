@@ -102,6 +102,65 @@ namespace Tests
             parsedToken2.Subject.Should().Be(parsedToken1.Subject);
         }
 
+        [Test]
+        public async Task T3_CheckLogout()
+        {
+            // Arrange
+            _factory.CreateClient(); // need to create a client for the server property to be available
+            var server = _factory.Server;
+
+            var connection1 = await StartConnectionAsync(server.CreateHandler());
+            var connection2 = await StartConnectionAsync(server.CreateHandler());
+
+            var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
+            var logout = await connection1.InvokeAsync<LogoutResponse>("Logout");
+
+            var jwt = loginWithNameRes.Token;
+            var loginWithTokenRes = await connection2.InvokeAsync<LoginResponse>("LoginWithToken", jwt);
+
+            await connection1.StopAsync();
+            await connection2.StopAsync();
+            //When the user logout, we should get a success at true
+            logout.Success.Should().Be(true);
+            //When we try to login with the token with which we disconnected, it should fail
+            loginWithTokenRes.Success.Should().Be(false);
+
+        }
+
+        [Test]
+        public async Task T4_CheckSpam()
+        {
+            // Arrange
+            bool IsSpamming = false;
+            _factory.CreateClient(); // need to create a client for the server property to be available
+            var server = _factory.Server;
+
+            var connection1 = await StartConnectionAsync(server.CreateHandler());
+
+            connection1.On("StopSpamming", () =>
+            {
+                IsSpamming = true;
+            });
+
+            var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");;
+            await connection1.SendAsync("SendMessage", "je");
+            await connection1.SendAsync("SendMessage", "suis");
+            await connection1.SendAsync("SendMessage", "en");
+            await connection1.SendAsync("SendMessage", "train");
+            await connection1.SendAsync("SendMessage", "de");
+            await connection1.SendAsync("SendMessage", "spam");
+            await connection1.SendAsync("SendMessage", "le");
+            await connection1.SendAsync("SendMessage", "chat");
+            await connection1.SendAsync("SendMessage", "de");
+            await connection1.SendAsync("SendMessage", "plusieurs");
+            await connection1.SendAsync("SendMessage", "messages");
+            await Task.Delay(500);
+            await connection1.StopAsync();
+            //After sending more than 10 messages in less than 10 seconds, I should receive the OnSpamming event
+            IsSpamming.Should().Be(true);
+
+        }
+
 
     }
 }
