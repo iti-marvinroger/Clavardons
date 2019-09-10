@@ -55,6 +55,11 @@ const messagesModel: MessagesModel = {
         },
       ])
     })
+
+    connection.on('StopSpamming', (message: MessageEvent) => {
+      console.log('Stop spamming!')
+      window.alert('Clavardons avec respect®, arrête de spammer.')
+    })
   }),
 }
 

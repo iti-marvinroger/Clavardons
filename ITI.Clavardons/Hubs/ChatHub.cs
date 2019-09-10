@@ -144,6 +144,7 @@ namespace ITI.Clavardons.Hubs
 
             if (antiSpam.Check() == false)
             {
+                await Clients.Caller.SendAsync("StopSpamming");
                 return;
             }
 
