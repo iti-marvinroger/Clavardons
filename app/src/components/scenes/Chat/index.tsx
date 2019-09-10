@@ -30,6 +30,12 @@ export const ChatUser = React.memo<ChatUserProps>(props => {
       display={isSelf ? 'none' : 'flex'}
       bg="otherMessage"
       color="white"
+      style={{
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+        overflowX: 'hidden',
+        flexShrink: 0,
+        maxHeight: 100,
+      }}
     >
       <Text>{props.user.name}</Text>
     </Box>
@@ -73,7 +79,10 @@ export const ChatMessage = React.memo<ChatMessageProps>(props => {
         p={3}
         bg={bgColor}
         borderRadius={3}
-        style={{ overflow: 'hidden' }}
+        style={{
+          overflow: 'hidden',
+          boxShadow: '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
+        }}
       >
         <Text color="white">{props.message.text}</Text>
       </Box>
@@ -122,10 +131,9 @@ export const Chat: React.FC = () => {
     <Box flexDirection="column" flexGrow={1} alignSelf="stretch">
       <Box
         p={3}
-        borderBottom="1px solid"
-        borderBottomColor="placeholder"
         justifyContent={['center', 'space-between']}
         alignItems="center"
+        style={{ boxShadow: '2px 2px 5px rgba(0, 0, 0, .2)' }}
       >
         <Logo src={logoSvg} height={50} />
         <Box display={['none', 'flex']} alignItems="center">
@@ -170,8 +178,10 @@ export const Chat: React.FC = () => {
           p={3}
           display={['none', 'flex']}
           width={[0, 200, 300]}
-          borderLeft="1px solid"
-          borderLeftColor="placeholder"
+          style={{
+            boxShadow: '0px 0px 5px rgba(0, 0, 0, .2)',
+            overflowY: 'auto',
+          }}
           flexDirection="column"
         >
           {Object.values(users).map(user => (
