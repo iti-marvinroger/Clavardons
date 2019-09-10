@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using ITI.Clavardons.Hubs.Responses;
 using ITI.Clavardons.Libraries;
@@ -10,23 +11,51 @@ namespace ITI.Clavardons.Hubs
     public class ChatHub : Hub
     {
         const string CONNECTED_GROUP = "connected";
+        const int ANTI_SPAM_MESSAGES_PER_WINDOW = 10;
+        readonly TimeSpan ANTI_SPAM_WINDOW = TimeSpan.FromSeconds(10);
 
         private static JWTFactory _jwtFactory = new JWTFactory(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
         private static Dictionary<string, JWTPayload> _jwtPayloadPerConnectionId = new Dictionary<string, JWTPayload>();
         private static HashSet<string> _revokedTokenIds = new HashSet<string>();
+        private static Dictionary<string, JWTPayload> _connectedUsers = new Dictionary<string, JWTPayload>();
+        private static Dictionary<string, AntiSpam> _antiSpamPerUser = new Dictionary<string, AntiSpam>();
 
-        private async Task connectUser(HubCallerContext context, JWTPayload payload)
+        private async Task<LoginResponse> connectUser(HubCallerContext context, JWTPayload payload, string jwt)
         {
+            if (_connectedUsers.ContainsKey(payload.Subject)) {
+                return new LoginResponse { Success = false };
+            }
+
             await Clients.Group(CONNECTED_GROUP).SendAsync("AddUser", new NewUserEvent { Id = payload.Subject, Name = payload.Name });
 
-            foreach (var item in _jwtPayloadPerConnectionId)
+            foreach (var item in _connectedUsers)
             {
                 await Clients.Caller.SendAsync("AddUser", new NewUserEvent { Id = item.Value.Subject, Name = item.Value.Name });
             }
 
             _jwtPayloadPerConnectionId.Add(context.ConnectionId, payload);
+            _connectedUsers.Add(payload.Subject, payload);
+            _antiSpamPerUser.Add(payload.Subject, new AntiSpam(ANTI_SPAM_WINDOW, ANTI_SPAM_MESSAGES_PER_WINDOW));
 
             await Groups.AddToGroupAsync(Context.ConnectionId, CONNECTED_GROUP);
+
+            return new LoginResponse { Success = true, Token = jwt, Name = payload.Name, UserId = payload.Subject };
+        }
+
+        private async Task handleUserDisconnect(HubCallerContext context)
+        {
+            var userInfo = getUserInfo(Context);
+
+            if (userInfo.Value.JwtID == null)
+            {
+                return;
+            }
+
+            _connectedUsers.Remove(userInfo.Value.Subject);
+            _jwtPayloadPerConnectionId.Remove(Context.ConnectionId);
+            _antiSpamPerUser.Remove(userInfo.Value.Subject);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, CONNECTED_GROUP);
+            await Clients.Group(CONNECTED_GROUP).SendAsync("RemoveUser", new RemoveUserEvent { Id = userInfo.Value.Subject });
         }
 
         private JWTPayload? getUserInfo(HubCallerContext context)
@@ -35,6 +64,13 @@ namespace ITI.Clavardons.Hubs
             _jwtPayloadPerConnectionId.TryGetValue(context.ConnectionId, out payload);
 
             return payload;
+        }
+
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            await handleUserDisconnect(Context);
+
+            await base.OnDisconnectedAsync(exception);
         }
 
         public async Task<LoginResponse> LoginWithName(string name)
@@ -52,9 +88,7 @@ namespace ITI.Clavardons.Hubs
             var payload = new JWTPayload { JwtID = jwtId, Name = name, Subject = userId };
             string jwt = _jwtFactory.Generate(payload);
 
-            await connectUser(Context, payload);
-
-            return new LoginResponse { Success = true, Token = jwt, Name = name, UserId = userId };
+            return await connectUser(Context, payload, jwt);
         }
 
         public async Task<LoginResponse> LoginWithToken(string jwt)
@@ -78,9 +112,7 @@ namespace ITI.Clavardons.Hubs
                 return new LoginResponse { Success = false };
             }
 
-            await connectUser(Context, parsedToken);
-
-            return new LoginResponse { Success = true, Token = jwt, Name = parsedToken.Name, UserId = parsedToken.Subject };
+            return await connectUser(Context, parsedToken, jwt);
         }
 
         public async Task<LogoutResponse> Logout()
@@ -93,9 +125,7 @@ namespace ITI.Clavardons.Hubs
             }
 
             _revokedTokenIds.Add(userInfo.Value.JwtID);
-            _jwtPayloadPerConnectionId.Remove(Context.ConnectionId);
-            await Clients.Group(CONNECTED_GROUP).SendAsync("RemoveUser", new RemoveUserEvent { Id = userInfo.Value.Subject });
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, CONNECTED_GROUP);
+            await handleUserDisconnect(Context);
 
 
             return new LogoutResponse { Success = true };
@@ -106,6 +136,13 @@ namespace ITI.Clavardons.Hubs
             var userInfo = getUserInfo(Context);
 
             if (userInfo.Value.JwtID == null)
+            {
+                return;
+            }
+
+            var antiSpam = _antiSpamPerUser[userInfo.Value.Subject];
+
+            if (antiSpam.Check() == false)
             {
                 return;
             }
