@@ -186,12 +186,12 @@ namespace Tests
         public async Task T5_CheckSpam()
         {
             // Arrange
-            bool IsSpamming = false;
             _factory.CreateClient(); // need to create a client for the server property to be available
             var server = _factory.Server;
 
             var connection1 = await StartConnectionAsync(server.CreateHandler());
 
+            bool IsSpamming = false;
             connection1.On("StopSpamming", () =>
             {
                 IsSpamming = true;
@@ -218,6 +218,9 @@ namespace Tests
 
         public async Task T6_SendUserList()
         {
+            _factory.CreateClient(); // need to create a client for the server property to be available
+            var server = _factory.Server;
+
             var user1 = await StartConnectionAsync(server.CreateHandler());
             var user2 = await StartConnectionAsync(server.CreateHandler());
 
