@@ -10,6 +10,31 @@ import logoSvg from '../../../logo.svg'
 import { useStoreState, useStoreActions } from '../../../store'
 import { Message } from '../../../store/models/messages'
 import Button from '../../Button'
+import { User } from '../../../store/models/users'
+
+interface ChatUserProps {
+  user: User
+}
+
+export const ChatUser = React.memo<ChatUserProps>(props => {
+  const user = useStoreState(state => state.auth.user)
+
+  const isSelf = useMemo(() => {
+    return props.user.id === user.id
+  }, [props.user.id, user])
+
+  return (
+    <Box
+      p={2}
+      mb={1}
+      display={isSelf ? 'none' : 'flex'}
+      bg="otherMessage"
+      color="white"
+    >
+      <Text>{props.user.name}</Text>
+    </Box>
+  )
+})
 
 interface ChatMessageProps {
   message: Message
@@ -62,7 +87,9 @@ export const Chat: React.FC = () => {
 
   const user = useStoreState(state => state.auth.user)
   const messages = useStoreState(state => state.messages.messages)
+  const users = useStoreState(state => state.users.users)
   const sendMessage = useStoreActions(actions => actions.messages.sendMessage)
+  const logout = useStoreActions(actions => actions.auth.logout)
 
   const handleMessageChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,6 +114,10 @@ export const Chat: React.FC = () => {
     [message, sendMessage]
   )
 
+  const handleLogout = useCallback(() => {
+    logout()
+  }, [logout])
+
   return (
     <Box flexDirection="column" flexGrow={1} alignSelf="stretch">
       <Box
@@ -97,7 +128,12 @@ export const Chat: React.FC = () => {
         alignItems="center"
       >
         <Logo src={logoSvg} height={50} />
-        <Box display={['none', 'flex']}>A toi le clavardage, {user.name} !</Box>
+        <Box display={['none', 'flex']} alignItems="center">
+          <Box>A toi le clavardage, {user.name} !</Box>
+          <Button ml={2} onClick={handleLogout}>
+            Déconnexion
+          </Button>
+        </Box>
       </Box>
 
       <Box flexGrow={1} style={{ overflow: 'hidden' }}>
@@ -136,8 +172,11 @@ export const Chat: React.FC = () => {
           width={[0, 200, 300]}
           borderLeft="1px solid"
           borderLeftColor="placeholder"
+          flexDirection="column"
         >
-          Users
+          {Object.values(users).map(user => (
+            <ChatUser key={user.id} user={user} />
+          ))}
         </Box>
       </Box>
     </Box>

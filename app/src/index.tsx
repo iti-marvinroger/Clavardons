@@ -19,5 +19,6 @@ actions.connection.updateUrl(serverUrl)
 actions.connection.handleConnection(connection)
 actions.auth.handleConnection(connection)
 actions.messages.handleConnection(connection)
+actions.users.handleConnection(connection)
 
 ReactDOM.render(<App />, document.getElementById('root'))

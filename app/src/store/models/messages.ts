@@ -13,6 +13,7 @@ export interface MessagesModel {
   messages: Message[]
 
   addMessages: Action<MessagesModel, Message[]>
+  clearMessages: Action<MessagesModel>
 
   handleConnection: Thunk<
     MessagesModel,
@@ -30,6 +31,9 @@ const messagesModel: MessagesModel = {
 
   addMessages: action((state, messages) => {
     state.messages = state.messages.concat(messages)
+  }),
+  clearMessages: action(state => {
+    state.messages = []
   }),
 
   sendMessage: thunk(async (_, text) => {

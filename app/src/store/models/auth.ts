@@ -1,7 +1,11 @@
 import { Action, action, Thunk, thunk, ThunkOn, thunkOn } from 'easy-peasy'
 import { StoreModel } from '.'
-import { LoginResponse } from '../../messages'
-import { getTokenFromStorage, saveTokenToStorage } from '../../services/storage'
+import { LoginResponse, LogoutResponse } from '../../messages'
+import {
+  clearTokenFromStorage,
+  getTokenFromStorage,
+  saveTokenToStorage,
+} from '../../services/storage'
 
 export interface AuthModel {
   loading: boolean
@@ -20,6 +24,7 @@ export interface AuthModel {
   handleConnection: Thunk<AuthModel, signalR.HubConnection, unknown, StoreModel>
   loginWithName: Thunk<AuthModel, string, unknown, StoreModel>
   loginWithToken: Thunk<AuthModel, string, unknown, StoreModel>
+  logout: Thunk<AuthModel, void, unknown, StoreModel>
 
   onConnectionUp: ThunkOn<AuthModel, unknown, StoreModel>
 }
@@ -71,11 +76,24 @@ const authModel: AuthModel = {
 
     if (!result.success) {
       console.log('Could not connect with the stored token')
+      return
     }
 
     actions.updateToken(result.token)
     actions.updateUser({ id: result.userId, name: result.name })
     actions.updateLoggedIn(true)
+
+    console.log('Success')
+  }),
+  logout: thunk(async (actions, _, { getStoreActions }) => {
+    console.log('Logging out...')
+    await connection.invoke<LogoutResponse>('Logout')
+    actions.updateLoggedIn(false)
+    const storeActions = getStoreActions()
+    storeActions.messages.clearMessages()
+    storeActions.users.clearUsers()
+
+    clearTokenFromStorage()
 
     console.log('Success')
   }),
