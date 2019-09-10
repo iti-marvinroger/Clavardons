@@ -1,3 +1,4 @@
+using FluentAssertions;
 using ITI.Clavardons.Libraries;
 using NUnit.Framework;
 
@@ -19,7 +20,7 @@ namespace Tests
             var jwtFactory = new JWTFactory(key);
             var jwt = jwtFactory.Generate(payload);
 
-            Assert.AreEqual("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMiJ9.YyJFI-9mZc1w-YX3bjPSRr-kJ7nlzPlMNI4cgwm735A", jwt);
+            jwt.Should().Be("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMiJ9.YyJFI-9mZc1w-YX3bjPSRr-kJ7nlzPlMNI4cgwm735A");
         }
 
         [Test]
@@ -31,7 +32,7 @@ namespace Tests
             var jwtFactory = new JWTFactory(key);
             var jwt = jwtFactory.Generate(payload);
 
-            Assert.AreEqual(true, jwtFactory.Verify(jwt));
+            jwtFactory.Verify(jwt).Should().BeTrue();
         }
 
         [Test]
@@ -43,7 +44,7 @@ namespace Tests
             var jwtFactory = new JWTFactory(key);
             var jwt = jwtFactory.Generate(payload);
 
-            Assert.AreEqual(false, jwtFactory.Verify(jwt + "deadbeef"));
+            jwtFactory.Verify(jwt + "deadbeef").Should().BeFalse();
         }
 
         [Test]
@@ -57,9 +58,8 @@ namespace Tests
 
             var parsed = JWTFactory.Parse(jwt);
 
-            Assert.AreEqual("42", parsed.Subject);
-            Assert.AreEqual(null, parsed.ExpirationTime);
-            Assert.AreEqual(null, parsed.JwtID);
+            parsed.Subject.Should().Be("42");
+            parsed.JwtID.Should().BeNull();
         }
     }
 }

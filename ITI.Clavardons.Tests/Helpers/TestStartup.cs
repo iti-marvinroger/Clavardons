@@ -1,10 +1,8 @@
-﻿using System;
-using ITI.Clavardons.Hubs;
+﻿using ITI.Clavardons.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Autofac;
 
 namespace ITI.Clavardons.Tests.Helpers
 {
@@ -17,8 +15,6 @@ namespace ITI.Clavardons.Tests.Helpers
 
         public IConfiguration Configuration { get; }
         public IHostingEnvironment Environment { get; }
-
-        public IContainer ApplicationContainer { get; private set; }
 
         public void ConfigureServices(IServiceCollection services)
         {

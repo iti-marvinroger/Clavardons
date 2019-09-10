@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using ITI.Clavardons.Hubs.Responses;
 using ITI.Clavardons.Libraries;

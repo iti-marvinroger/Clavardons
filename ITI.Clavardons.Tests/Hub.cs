@@ -179,7 +179,6 @@ namespace Tests
             logout.Success.Should().Be(true);
             //When we try to login with the token with which we disconnected, it should fail
             loginWithTokenRes.Success.Should().Be(false);
-
         }
 
         [Test]
@@ -216,6 +215,7 @@ namespace Tests
 
         }
 
+        [Test]
         public async Task T6_SendUserList()
         {
             _factory.CreateClient(); // need to create a client for the server property to be available
@@ -241,6 +241,43 @@ namespace Tests
 
             newUsers.Should().HaveCount(1);
             newUsers.Should().Contain((item) => item.Name == user1LoginRes.Name & item.Id == user1LoginRes.UserId);
+        }
+
+        [Test]
+        public async Task T7_CheckUserRemove()
+        {
+            _factory.CreateClient(); // need to create a client for the server property to be available
+            var server = _factory.Server;
+
+            var user1 = await StartConnectionAsync(server.CreateHandler());
+            var user2 = await StartConnectionAsync(server.CreateHandler());
+            var user3 = await StartConnectionAsync(server.CreateHandler());
+
+            // Act
+            List<RemoveUserEvent> removedUsers = new List<RemoveUserEvent>();
+            user3.On<RemoveUserEvent>("RemoveUser", (removedUser) =>
+            {
+                removedUsers.Add(removedUser);
+            });
+
+            var user1LoginRes = await user1.InvokeAsync<LoginResponse>("LoginWithName", "Marvin ROGER");
+            var user2LoginRes = await user2.InvokeAsync<LoginResponse>("LoginWithName", "Mathieu BOISSADY");
+            await user3.InvokeAsync<LoginResponse>("LoginWithName", "Francis CABREL");
+
+            await user1.StopAsync();
+            await user2.InvokeAsync<LogoutResponse>("Logout");
+
+            await Task.Delay(500);
+
+            await user2.StopAsync();
+            await user3.StopAsync();
+
+            // the third, not disconnected user should receive that both
+            // user 1 and 2 were removed, because the first one closed its connection
+            // and the second one explicitely logout'd
+            removedUsers.Should().HaveCount(2);
+            removedUsers.Should().Contain((item) => item.Id == user1LoginRes.UserId);
+            removedUsers.Should().Contain((item) => item.Id == user2LoginRes.UserId);
         }
     }
 }

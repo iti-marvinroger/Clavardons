@@ -12,8 +12,6 @@ namespace ITI.Clavardons.Libraries
         public string Name;
         [JsonProperty(PropertyName = "jti")]
         public string JwtID;
-        [JsonProperty(PropertyName = "exp")]
-        public int? ExpirationTime;
 
         public string Serialize()
         {

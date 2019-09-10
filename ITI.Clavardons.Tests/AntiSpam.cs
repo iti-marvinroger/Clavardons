@@ -1,4 +1,5 @@
 using System;
+using FluentAssertions;
 using ITI.Clavardons.Libraries;
 using ITI.Clavardons.Providers;
 using NUnit.Framework;
@@ -27,11 +28,11 @@ namespace Tests
         {
             var antispam = new AntiSpam(TimeSpan.FromSeconds(10), 3);
 
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(false, antispam.Check());
-            Assert.AreEqual(false, antispam.Check());
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeFalse();
+            antispam.Check().Should().BeFalse();
         }
 
         [Test]
@@ -40,24 +41,24 @@ namespace Tests
             var fakeTimeProvider = new FakeTimeProvider();
 
             var antispam = new AntiSpam(TimeSpan.FromSeconds(10), 3, fakeTimeProvider);
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(true, antispam.Check());
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeTrue();
 
             fakeTimeProvider.date = fakeTimeProvider.date.AddSeconds(10);
 
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(true, antispam.Check());
-            Assert.AreEqual(false, antispam.Check());
-            Assert.AreEqual(false, antispam.Check());
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeTrue();
+            antispam.Check().Should().BeFalse();
+            antispam.Check().Should().BeFalse();
         }
 
         [Test]
         public void T1_CheckFailWhenZeroMessages()
         {
             var antispam = new AntiSpam(TimeSpan.FromSeconds(10), 0);
-            Assert.AreEqual(false, antispam.Check());
+            antispam.Check().Should().BeFalse();
         }
     }
 }
