@@ -4,3 +4,9 @@ export interface LoginResponse {
   userId: string
   name: string
 }
+
+export interface MessageEvent {
+  id: string
+  userId: string
+  text: string
+}

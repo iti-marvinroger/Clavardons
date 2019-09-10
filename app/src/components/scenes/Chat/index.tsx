@@ -43,7 +43,13 @@ export const ChatMessage = React.memo<ChatMessageProps>(props => {
         </Text>
       </Box>
 
-      <Box mt={1} p={3} bg={bgColor} borderRadius={3}>
+      <Box
+        mt={1}
+        p={3}
+        bg={bgColor}
+        borderRadius={3}
+        style={{ overflow: 'hidden' }}
+      >
         <Text color="white">{props.message.text}</Text>
       </Box>
     </Box>

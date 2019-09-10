@@ -1,5 +1,6 @@
 import { Action, action, thunk, Thunk } from 'easy-peasy'
 import { StoreModel } from '.'
+import { MessageEvent } from '../../messages'
 
 export interface Message {
   id: string
@@ -12,9 +13,16 @@ export interface MessagesModel {
 
   addMessages: Action<MessagesModel, Message[]>
 
+  handleConnection: Thunk<
+    MessagesModel,
+    signalR.HubConnection,
+    unknown,
+    StoreModel
+  >
   sendMessage: Thunk<MessagesModel, string, unknown, StoreModel>
-  monitorMessages: Thunk<MessagesModel, void, unknown, StoreModel>
 }
+
+let connection: signalR.HubConnection
 
 const messagesModel: MessagesModel = {
   messages: [
@@ -34,23 +42,24 @@ const messagesModel: MessagesModel = {
     state.messages = state.messages.concat(messages)
   }),
 
-  sendMessage: thunk((actions, text, { getStoreState }) => {
-    actions.addMessages([
-      { id: Date.now().toString(), text, userId: getStoreState().auth.user.id },
-    ])
+  sendMessage: thunk(async (_, text) => {
+    console.log('Sending message...')
+    await connection.invoke('SendMessage', text)
+    console.log('Message sent')
   }),
-  monitorMessages: thunk((actions, _, { getStoreState }) => {
-    let i = 0
-    setInterval(() => {
-      const meId = getStoreState().auth.user.id
+  handleConnection: thunk((actions, connection_) => {
+    connection = connection_
+
+    connection.on('ReceiveMessage', (message: MessageEvent) => {
+      console.log('Receiving message...')
       actions.addMessages([
         {
-          id: Date.now().toString(),
-          text: new Date().toISOString(),
-          userId: ++i % 4 === 0 ? meId : 'foo',
+          id: message.id,
+          text: message.text,
+          userId: message.userId,
         },
       ])
-    }, 1500)
+    })
   }),
 }
 
