@@ -9,6 +9,7 @@
     <Folder Include="Libraries\" />
     <Folder Include="Providers\" />
     <Folder Include="Hubs\" />
+    <Folder Include="Hubs\Responses\" />
   </ItemGroup>
 
   <ItemGroup>

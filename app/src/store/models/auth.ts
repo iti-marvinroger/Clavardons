@@ -1,5 +1,7 @@
-import { Action, action, Thunk, thunk } from 'easy-peasy'
+import { Action, action, Thunk, thunk, ThunkOn, thunkOn } from 'easy-peasy'
 import { StoreModel } from '.'
+import { LoginResponse } from '../../messages'
+import { getTokenFromStorage, saveTokenToStorage } from '../../services/storage'
 
 export interface AuthModel {
   loading: boolean
@@ -15,9 +17,14 @@ export interface AuthModel {
   updateToken: Action<AuthModel, string>
   updateUser: Action<AuthModel, { id: string; name: string }>
 
+  handleConnection: Thunk<AuthModel, signalR.HubConnection, unknown, StoreModel>
   loginWithName: Thunk<AuthModel, string, unknown, StoreModel>
   loginWithToken: Thunk<AuthModel, string, unknown, StoreModel>
+
+  onConnectionUp: ThunkOn<AuthModel, unknown, StoreModel>
 }
+
+let connection: signalR.HubConnection
 
 const authModel: AuthModel = {
   loading: false,
@@ -41,15 +48,56 @@ const authModel: AuthModel = {
     state.user = payload
   }),
 
+  handleConnection: thunk((actions, connection_) => {
+    connection = connection_
+  }),
   loginWithName: thunk(async (actions, name) => {
-    actions.updateUser({ id: 'id', name })
+    console.log('Logging in with name')
+    const result = await connection.invoke<LoginResponse>('LoginWithName', name)
+    actions.updateToken(result.token)
+    actions.updateUser({ id: result.userId, name: result.name })
     actions.updateLoggedIn(true)
+
+    saveTokenToStorage(result.token)
+
+    console.log('Success')
   }),
   loginWithToken: thunk(async (actions, token) => {
-    actions.updateUser({ id: 'id', name: 'John DOE' })
-    actions.updateToken(token)
+    console.log('Logging in with stored token')
+    const result = await connection.invoke<LoginResponse>(
+      'LoginWithToken',
+      token
+    )
+
+    if (!result.success) {
+      console.log('Could not connect with the stored token')
+    }
+
+    actions.updateToken(result.token)
+    actions.updateUser({ id: result.userId, name: result.name })
     actions.updateLoggedIn(true)
+
+    console.log('Success')
   }),
+
+  onConnectionUp: thunkOn(
+    (_, storeActions) => storeActions.connection.updateIsConnected,
+    (state, target) => {
+      if (!target.payload) {
+        return
+      }
+
+      // if we are connected
+
+      const storedToken = getTokenFromStorage()
+
+      if (!storedToken) {
+        return
+      }
+
+      state.loginWithToken(storedToken)
+    }
+  ),
 }
 
 export default authModel

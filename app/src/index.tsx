@@ -17,5 +17,6 @@ const actions = store.getActions()
 
 actions.connection.updateUrl(DEFAULT_URL)
 actions.connection.handleConnection(connection)
+actions.auth.handleConnection(connection)
 
 ReactDOM.render(<App />, document.getElementById('root'))

@@ -8,10 +8,12 @@ namespace ITI.Clavardons.Libraries
     {
         [JsonProperty(PropertyName = "sub")]
         public string Subject;
+        [JsonProperty(PropertyName = "name")]
+        public string Name;
+        [JsonProperty(PropertyName = "jti")]
+        public string JwtID;
         [JsonProperty(PropertyName = "exp")]
         public int? ExpirationTime;
-        [JsonProperty(PropertyName = "jti")]
-        public int? JwtID;
 
         public string Serialize()
         {
