@@ -69,7 +69,7 @@ namespace Tests
         }
 
         [Test]
-        public async Task T1_CheckLoginWithToken()
+        public async Task T2_CheckLoginWithToken()
         {
             // Arrange
             _factory.CreateClient(); // need to create a client for the server property to be available
@@ -89,15 +89,19 @@ namespace Tests
 
             var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
             await connection1.DisposeAsync();
+            await Task.Delay(500);
             var jwt = loginWithNameRes.Token;
+            var parsedToken1 = JWTFactory.Parse(jwt);
             var loginWithTokenRes = await connection2.InvokeAsync<LoginResponse>("LoginWithToken", jwt);
  
             // Assert
             loginWithTokenRes.Success.Should().Be(true);
-            loginWithTokenRes.Name.Should().Be("David GUETTA");
-            var parsedToken = JWTFactory.Parse(loginWithTokenRes.Token);
-            parsedToken.Name.Should().Be("David GUETTA");
-            parsedToken.Subject.Should().NotBeNullOrWhiteSpace();
+            loginWithTokenRes.Name.Should().Be(parsedToken1.Name);
+            var parsedToken2 = JWTFactory.Parse(loginWithTokenRes.Token);
+            parsedToken2.Name.Should().Be(parsedToken1.Name);
+            parsedToken2.Subject.Should().Be(parsedToken1.Subject);
         }
+
+
     }
 }
