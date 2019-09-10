@@ -7,6 +7,7 @@ using NUnit.Framework;
 using FluentAssertions;
 using ITI.Clavardons.Hubs.Responses;
 using ITI.Clavardons.Libraries;
+using System.Collections.Generic;
 
 namespace Tests
 {
@@ -53,6 +54,11 @@ namespace Tests
             var login11 = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
             var login12 = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "John DOE");
 
+            var login21 = await connection2.InvokeAsync<LoginResponse>("LoginWithName", "Polo");
+
+            await connection1.StopAsync();
+            await connection2.StopAsync();
+
             // Assert
             login11.Success.Should().Be(true);
             login11.Name.Should().Be("David GUETTA");
@@ -60,11 +66,11 @@ namespace Tests
             parsedToken.Name.Should().Be("David GUETTA");
             parsedToken.Subject.Should().NotBeNullOrWhiteSpace();
 
-            // the second attempt should not be a success
+            // if a user is already connected, we won't accept a new login attempt
             login12.Success.Should().Be(false);
 
-            var login21 = await connection2.InvokeAsync<LoginResponse>("LoginWithName", "Polo");
             var parsedToken2 = JWTFactory.Parse(login21.Token);
+            // the subject must be different for every user
             parsedToken2.Subject.Should().NotBe(parsedToken.Subject);
         }
 
@@ -79,21 +85,15 @@ namespace Tests
             var connection2 = await StartConnectionAsync(server.CreateHandler());
 
             // Act
-            //string user = null;
-            //string message = null;
-            //connection.On<string, string>("OnReceiveMessage", (u, m) =>
-            //{
-            //    user = u;
-            //    message = m;
-            //});
-
             var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
-            await connection1.DisposeAsync();
+            await connection1.StopAsync();
             await Task.Delay(500);
             var jwt = loginWithNameRes.Token;
             var parsedToken1 = JWTFactory.Parse(jwt);
             var loginWithTokenRes = await connection2.InvokeAsync<LoginResponse>("LoginWithToken", jwt);
- 
+
+            await connection2.StopAsync();
+
             // Assert
             loginWithTokenRes.Success.Should().Be(true);
             loginWithTokenRes.Name.Should().Be(parsedToken1.Name);
@@ -103,7 +103,62 @@ namespace Tests
         }
 
         [Test]
-        public async Task T3_CheckLogout()
+        public async Task T3_SendMessage()
+        {
+            // Arrange
+            _factory.CreateClient(); // need to create a client for the server property to be available
+            var server = _factory.Server;
+
+            var user1 = await StartConnectionAsync(server.CreateHandler());
+            var user2 = await StartConnectionAsync(server.CreateHandler());
+            var user3 = await StartConnectionAsync(server.CreateHandler());
+
+            // Act
+            MessageEvent? messageUser1 = null;
+            user1.On<MessageEvent>("ReceiveMessage", (message) =>
+            {
+                messageUser1 = message;
+            });
+
+            MessageEvent? messageUser2 = null;
+            user2.On<MessageEvent>("ReceiveMessage", (message) =>
+            {
+                messageUser2 = message;
+            });
+
+            MessageEvent? messageUser3 = null;
+            user3.On<MessageEvent>("ReceiveMessage", (message) =>
+            {
+                messageUser3 = message;
+            });
+
+            var user1LoginRes = await user1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
+            await user2.InvokeAsync<LoginResponse>("LoginWithName", "Philou");
+            await user1.InvokeAsync("SendMessage", "Coucou !");
+
+            await user1.StopAsync();
+            await user2.StopAsync();
+
+            await Task.Delay(500);
+
+            // Assert
+
+            messageUser1.Should().NotBeNull();
+            messageUser1.Value.Text.Should().Be("Coucou !");
+            messageUser1.Value.UserName.Should().Be(user1LoginRes.Name);
+            messageUser1.Value.UserId.Should().Be(user1LoginRes.UserId);
+
+            messageUser2.Should().NotBeNull();
+            messageUser2.Value.Text.Should().Be("Coucou !");
+            messageUser2.Value.UserName.Should().Be(user1LoginRes.Name);
+            messageUser2.Value.UserId.Should().Be(user1LoginRes.UserId);
+
+            // this user is not connected, he should not receive messages
+            messageUser3.Should().BeNull();
+        }
+
+        [Test]
+        public async Task T4_CheckLogout()
         {
             // Arrange
             _factory.CreateClient(); // need to create a client for the server property to be available
@@ -128,7 +183,7 @@ namespace Tests
         }
 
         [Test]
-        public async Task T4_CheckSpam()
+        public async Task T5_CheckSpam()
         {
             // Arrange
             bool IsSpamming = false;
@@ -142,7 +197,7 @@ namespace Tests
                 IsSpamming = true;
             });
 
-            var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");;
+            var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA"); ;
             await connection1.SendAsync("SendMessage", "je");
             await connection1.SendAsync("SendMessage", "suis");
             await connection1.SendAsync("SendMessage", "en");
@@ -161,6 +216,28 @@ namespace Tests
 
         }
 
+        public async Task T6_SendUserList()
+        {
+            var user1 = await StartConnectionAsync(server.CreateHandler());
+            var user2 = await StartConnectionAsync(server.CreateHandler());
 
+            // Act
+            List<NewUserEvent> newUsers = new List<NewUserEvent>();
+            user2.On<NewUserEvent>("AddUser", (newUser) =>
+            {
+                newUsers.Add(newUser);
+            });
+
+            var user1LoginRes = await user1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
+            var user2LoginRes = await user2.InvokeAsync<LoginResponse>("LoginWithName", "Marvin ROGER");
+
+            await user1.StopAsync();
+            await user2.StopAsync();
+
+            await Task.Delay(500);
+
+            newUsers.Should().HaveCount(1);
+            newUsers.Should().Contain((item) => item.Name == user1LoginRes.Name & item.Id == user1LoginRes.UserId);
+        }
     }
 }
