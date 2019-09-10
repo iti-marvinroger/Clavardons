@@ -22,7 +22,7 @@ namespace ITI.Clavardons
             {
                 options.AddDefaultPolicy(builder =>
                 {
-                    builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                    builder.AllowAnyHeader().AllowAnyMethod().SetIsOriginAllowed((arg) => true).AllowCredentials();
                 });
             });
 

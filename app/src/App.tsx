@@ -18,8 +18,6 @@ const StyledApp = styled.div`
   align-items: center;
 `
 
-store.getActions().messages.monitorMessages()
-
 const App: React.FC = () => {
   return (
     <StoreProvider store={store}>
