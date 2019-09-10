@@ -6,6 +6,7 @@ export interface Message {
   id: string
   text: string
   userId: string
+  userName: string
 }
 
 export interface MessagesModel {
@@ -25,18 +26,7 @@ export interface MessagesModel {
 let connection: signalR.HubConnection
 
 const messagesModel: MessagesModel = {
-  messages: [
-    { id: '1', text: 'Salut !', userId: 'id' },
-    { id: '2', text: 'Hey :)', userId: 'id2' },
-    { id: '3', text: 'Ca va ? ;)', userId: 'id' },
-    { id: '4', text: 'Oui et toi ?', userId: 'id2' },
-    { id: '5', text: 'Nickel...', userId: 'id' },
-    { id: '6', text: 'Salut !', userId: 'id' },
-    { id: '7', text: 'Hey :)', userId: 'id2' },
-    { id: '8', text: 'Ca va ? ;)', userId: 'id' },
-    { id: '9', text: 'Oui et toi ?', userId: 'id2' },
-    { id: '10', text: 'Nickel...', userId: 'id' },
-  ],
+  messages: [],
 
   addMessages: action((state, messages) => {
     state.messages = state.messages.concat(messages)
@@ -57,6 +47,7 @@ const messagesModel: MessagesModel = {
           id: message.id,
           text: message.text,
           userId: message.userId,
+          userName: message.userName,
         },
       ])
     })

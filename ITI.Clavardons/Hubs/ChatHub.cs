@@ -9,20 +9,20 @@ namespace ITI.Clavardons.Hubs
 {
     public class ChatHub : Hub
     {
-        private JWTFactory _jwtFactory = new JWTFactory(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
-        private static Dictionary<string, string> _userIdPerConnectionId = new Dictionary<string, string>();
+        private static JWTFactory _jwtFactory = new JWTFactory(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
+        private static Dictionary<string, JWTPayload> _jwtPayloadPerConnectionId = new Dictionary<string, JWTPayload>();
 
-        private void connectUser(HubCallerContext context, string userId)
+        private void connectUser(HubCallerContext context, JWTPayload payload)
         {
-            _userIdPerConnectionId.Add(context.ConnectionId, userId);
+            _jwtPayloadPerConnectionId.Add(context.ConnectionId, payload);
         }
 
-        private string getUserID(HubCallerContext context)
+        private JWTPayload? getUserInfo(HubCallerContext context)
         {
-            string userId;
-            _userIdPerConnectionId.TryGetValue(context.ConnectionId, out userId);
+            JWTPayload payload;
+            _jwtPayloadPerConnectionId.TryGetValue(context.ConnectionId, out payload);
 
-            return userId;
+            return payload;
         }
 
         public async Task<LoginResponse> LoginWithName(string name)
@@ -30,9 +30,10 @@ namespace ITI.Clavardons.Hubs
             string userId = Guid.NewGuid().ToString();
             string jwtId = Guid.NewGuid().ToString();
 
-            string jwt = _jwtFactory.Generate(new JWTPayload { JwtID = jwtId, Name = name, Subject = userId });
+            var payload = new JWTPayload { JwtID = jwtId, Name = name, Subject = userId };
+            string jwt = _jwtFactory.Generate(payload);
 
-            connectUser(Context, userId);
+            connectUser(Context, payload);
 
             return new LoginResponse { Success = true, Token = jwt, Name = name, UserId = userId };
         }
@@ -46,7 +47,7 @@ namespace ITI.Clavardons.Hubs
 
             var parsedToken = JWTFactory.Parse(jwt);
 
-            connectUser(Context, parsedToken.Subject);
+            connectUser(Context, parsedToken);
 
             return new LoginResponse { Success = true, Token = jwt, Name = parsedToken.Name, UserId = parsedToken.Subject };
         }
@@ -61,16 +62,16 @@ namespace ITI.Clavardons.Hubs
 
         public async Task SendMessage(string text)
         {
-            var userId = getUserID(Context);
+            var userInfo = getUserInfo(Context);
 
-            if (userId == null)
+            if (userInfo == null)
             {
                 return;
             }
 
             string messageId = Guid.NewGuid().ToString();
 
-            await Clients.All.SendAsync("ReceiveMessage", new MessageEvent { Id = messageId, Text = text, UserId = userId });
+            await Clients.All.SendAsync("ReceiveMessage", new MessageEvent { Id = messageId, Text = text, UserId = userInfo.Value.Subject, UserName = userInfo.Value.Name });
         }
 
         public async Task UpdateIsWriting(bool writing)

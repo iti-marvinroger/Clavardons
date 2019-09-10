@@ -39,7 +39,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(props => {
     >
       <Box flexDirection="column" maxHeight={50} style={{ overflow: 'hidden' }}>
         <Text alignSelf={alignSelf} color="placeholder">
-          {props.message.userId}
+          {props.message.userName}
         </Text>
       </Box>
 
@@ -105,6 +105,7 @@ export const Chat: React.FC = () => {
           <Box
             p={3}
             flexDirection="column-reverse"
+            flexGrow={1}
             style={{ overflowY: 'auto' }}
           >
             {/* Trick to unreverse. The advantage of reverse is that the top

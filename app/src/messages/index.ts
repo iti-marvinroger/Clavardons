@@ -8,5 +8,6 @@ export interface LoginResponse {
 export interface MessageEvent {
   id: string
   userId: string
+  userName: string
   text: string
 }

@@ -5,6 +5,7 @@ namespace ITI.Clavardons.Hubs.Responses
     {
         public string Id;
         public string UserId;
+        public string UserName;
         public string Text;
     }
 }
