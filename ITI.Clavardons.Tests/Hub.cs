@@ -50,14 +50,6 @@ namespace Tests
             var connection2 = await StartConnectionAsync(server.CreateHandler());
 
             // Act
-            //string user = null;
-            //string message = null;
-            //connection.On<string, string>("OnReceiveMessage", (u, m) =>
-            //{
-            //    user = u;
-            //    message = m;
-            //});
-
             var login11 = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
             var login12 = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "John DOE");
 
@@ -74,6 +66,38 @@ namespace Tests
             var login21 = await connection2.InvokeAsync<LoginResponse>("LoginWithName", "Polo");
             var parsedToken2 = JWTFactory.Parse(login21.Token);
             parsedToken2.Subject.Should().NotBe(parsedToken.Subject);
+        }
+
+        [Test]
+        public async Task T1_CheckLoginWithToken()
+        {
+            // Arrange
+            _factory.CreateClient(); // need to create a client for the server property to be available
+            var server = _factory.Server;
+
+            var connection1 = await StartConnectionAsync(server.CreateHandler());
+            var connection2 = await StartConnectionAsync(server.CreateHandler());
+
+            // Act
+            //string user = null;
+            //string message = null;
+            //connection.On<string, string>("OnReceiveMessage", (u, m) =>
+            //{
+            //    user = u;
+            //    message = m;
+            //});
+
+            var loginWithNameRes = await connection1.InvokeAsync<LoginResponse>("LoginWithName", "David GUETTA");
+            await connection1.DisposeAsync();
+            var jwt = loginWithNameRes.Token;
+            var loginWithTokenRes = await connection2.InvokeAsync<LoginResponse>("LoginWithToken", jwt);
+ 
+            // Assert
+            loginWithTokenRes.Success.Should().Be(true);
+            loginWithTokenRes.Name.Should().Be("David GUETTA");
+            var parsedToken = JWTFactory.Parse(loginWithTokenRes.Token);
+            parsedToken.Name.Should().Be("David GUETTA");
+            parsedToken.Subject.Should().NotBeNullOrWhiteSpace();
         }
     }
 }
