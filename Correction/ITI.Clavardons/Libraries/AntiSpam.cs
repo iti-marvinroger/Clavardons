@@ -3,6 +3,13 @@ using ITI.Clavardons.Providers;
 
 namespace ITI.Clavardons.Libraries
 {
+    /// <summary>
+    /// The AntiSpam class provides a way to check whether a user is attempting
+    /// to spam the chat or not.
+    ///
+    /// It works by allowing a certain number of messages during a certain window.
+    /// (e.g. 10 messages every 10 seconds)
+    /// </summary>
     public class AntiSpam
     {
         private ITimeProvider _timeProvider;
@@ -19,6 +26,10 @@ namespace ITI.Clavardons.Libraries
             _messagesPerWindow = messagesPerWindow;
         }
 
+        /// <summary>
+        /// Check whether or not a user is spamming.
+        /// </summary>
+        /// <returns>true if the user is not spamming, false otherwise</returns>
         public bool Check()
         {
             var now = _timeProvider.GetNow();

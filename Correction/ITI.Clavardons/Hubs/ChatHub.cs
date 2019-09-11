@@ -65,6 +65,9 @@ namespace ITI.Clavardons.Hubs
             return payload;
         }
 
+        /// <summary>
+        /// Called when the client is disconnected, cleanly or not.
+        /// </summary>
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             await handleUserDisconnect(Context);
@@ -72,6 +75,11 @@ namespace ITI.Clavardons.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
+        /// <summary>
+        /// Login the current client with a name.
+        /// </summary>
+        /// <param name="name">The name to login with</param>
+        /// <returns>A LoginResponse with all data</returns>
         public async Task<LoginResponse> LoginWithName(string name)
         {
             var userInfo = getUserInfo(Context);
@@ -90,6 +98,11 @@ namespace ITI.Clavardons.Hubs
             return await connectUser(Context, payload, jwt);
         }
 
+        /// <summary>
+        /// Login the current client with a JWT.
+        /// </summary>
+        /// <param name="jwt">The JWT to login with</param>
+        /// <returns>A LoginResponse with all data</returns>
         public async Task<LoginResponse> LoginWithToken(string jwt)
         {
             var userInfo = getUserInfo(Context);
@@ -114,6 +127,10 @@ namespace ITI.Clavardons.Hubs
             return await connectUser(Context, parsedToken, jwt);
         }
 
+        /// <summary>
+        /// Logout a user, revoking its JWT.
+        /// </summary>
+        /// <returns>A LogoutResponse with all data</returns>
         public async Task<LogoutResponse> Logout()
         {
             var userInfo = getUserInfo(Context);
@@ -130,6 +147,10 @@ namespace ITI.Clavardons.Hubs
             return new LogoutResponse { Success = true };
         }
 
+        /// <summary>
+        /// Send a messager to all users.
+        /// </summary>
+        /// <param name="text">The text of the message</param>
         public async Task SendMessage(string text)
         {
             var userInfo = getUserInfo(Context);
