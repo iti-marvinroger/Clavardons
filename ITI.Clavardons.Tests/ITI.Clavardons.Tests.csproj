@@ -20,7 +20,8 @@
   </ItemGroup>
     
   <ItemGroup>
-    <ProjectReference Include="..\Correction\ITI.Clavardons.Correction\ITI.Clavardons.Correction.csproj" />
+    <!--<ProjectReference Include="..\Correction\ITI.Clavardons.Correction\ITI.Clavardons.Correction.csproj" /> -->
+    <ProjectReference Include="..\ITI.Clavardons\ITI.Clavardons.csproj" />
   </ItemGroup>
 
 
