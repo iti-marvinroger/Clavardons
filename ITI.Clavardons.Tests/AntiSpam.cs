@@ -36,7 +36,7 @@ namespace Tests
         }
 
         [Test]
-        public void T1_CheckPassWhenWaitingEnough()
+        public void T2_CheckPassWhenWaitingEnough()
         {
             var fakeTimeProvider = new FakeTimeProvider();
 
@@ -55,7 +55,7 @@ namespace Tests
         }
 
         [Test]
-        public void T1_CheckFailWhenZeroMessages()
+        public void T3_CheckFailWhenZeroMessages()
         {
             var antispam = new AntiSpam(TimeSpan.FromSeconds(10), 0);
             antispam.Check().Should().BeFalse();

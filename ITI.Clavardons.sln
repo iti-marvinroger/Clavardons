@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITI.Clavardons.Correction", "Correction\ITI.Clavardons\ITI.Clavardons.Correction.csproj", "{2475DC6F-9774-466C-B80E-5F08DAE7041D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITI.Clavardons.Correction", "Correction\ITI.Clavardons.Correction\ITI.Clavardons.Correction.csproj", "{2475DC6F-9774-466C-B80E-5F08DAE7041D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ITI.Clavardons.Tests", "ITI.Clavardons.Tests\ITI.Clavardons.Tests.csproj", "{F25C442C-65C1-4048-805F-0205C30C1E34}"
 EndProject
